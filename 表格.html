@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="lib/vue.js"></script>
+    <script src="lib/jquery.3.3.1.js"></script>
+    <script src="lib/js/bootstrap.js"></script>
+
+    <link rel="stylesheet" href="lib/css/bootstrap.css">
+    <style>
+        .form-list {
+            width: 1142px;
+            margin: 100px auto;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="panel panel-default panel-primary form-list">
+            <div class="panel-heading">
+                <h3 class="panel-title">添加品牌</h3>
+            </div>
+            <div class="panel-body form-inline">
+                <label>
+                    ID:
+                    <input type="text" v-model="newForm.id" class="form-control">
+                </label>
+                <label>
+                    Name:
+                    <input type="text" v-model="newForm.name" class="form-control">
+                </label>
+                <label>
+                    Money:
+                    <input type="text" v-model="newForm.money" class="form-control">
+                </label>
+                <input @click="add" type="button" value="添加" class="btn btn-primary">
+                <label>
+                    <input type="text" v-model="keywords" placeholder="请输入要搜索的内容" class="form-control">
+                </label>
+            </div>
+            <table class="table table-hover table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>价格</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="list in serch(keywords)" :key="list.id">
+                        <td>{{list.id}}</td>
+                        <td>{{list.name}}</td>
+                        <td>{{list.money}}</td>
+                        <td>
+                            <button type="button" @click="modify(list.id)" class="btn btn-primary" data-toggle="modal"
+                                data-target="#exampleModal" data-whatever="@mdo">修改</button>
+                            <input type="button" @click="del(list.id)" value="删除" class="btn btn-danger">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+
+            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                    aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="exampleModalLabel">修改</h4>
+                        </div>
+                        <div class="modal-body">
+                            <form>
+                                <div class="form-group">
+                                    <label for="recipient-name" class="control-label">ID</label>
+                                    <input type="text" v-model="myId" class="form-control" id="recipient-name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="message-text" class="control-label">Name</label>
+                                    <textarea class="form-control" v-model="myName" id="message-text"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="message-text" class="control-label">价格</label>
+                                    <textarea class="form-control" v-model="myMoney" id="message-text"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                            <button type="button" @click="sure" class="btn btn-primary">确定</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DEKEY = 'lists';
+        var vm = new Vue({
+            el: "#app",
+            data: {
+                keywords:'',
+                lists: [],
+                newForm: {
+                    id: '',
+                    name: '',
+                    money: '',
+                },
+                myId: '',
+                myName: '',
+                myMoney: '',
+                newId: '',
+
+            },
+            created () {
+                //在生命函数直接调用
+              this.initLists()  
+            },
+            watch: {
+                //深度监听
+              lists:{
+                  handler(nv,ov){
+                    localStorage.setItem(DEKEY,JSON.stringify(this.lists))
+                  },
+                  deep:true
+              } 
+            },
+            methods: {
+                //添加
+                add() {
+                    this.lists.push({
+                        id: this.newForm.id,
+                        name: this.newForm.name,
+                        money: this.newForm.money
+                    })
+                    localStorage.setItem(DEKEY,JSON.stringify(this.lists))
+                    this.newForm.id = this.newForm.name = this.newForm.money = '';
+                },
+                //删除
+                del(id) {
+                    if (confirm('确认删除？')) {
+                        var index = this.lists.findIndex(item => {
+                            if (item.id == id) {
+                                return true
+                            }
+                        })
+                        this.lists.splice(index, 1)
+                    } else {
+
+                    }
+                },
+                //修改
+                modify(id) {
+                    this.newId = id
+                    this.myId = this.lists.find(item => item.id == id).id
+                    this.myName = this.lists.find(item => item.id == id).name
+                    this.myMoney = this.lists.find(item => item.id == id).money
+                },
+                //确定
+                sure() {
+                    this.lists.find(item => item.id == this.newId).id = this.myId
+                    this.lists.find(item => item.id == this.newId).name = this.myName
+                    this.lists.find(item => item.id == this.newId).money = this.myMoney
+                    $('#exampleModal').modal('hide')
+                },
+                //搜索
+                serch(keywords){
+                    return this.lists.filter(item=>{
+                        if(item.name.includes(keywords)){
+                            return item;
+                        }
+                    })
+                },
+                //储存到后台
+                initLists(){
+                    var lists=localStorage.getItem(DEKEY)
+                    if(lists){
+                        this.lists=JSON.parse(lists)
+                    }else{
+                        this.lists=[];
+                    }
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>
